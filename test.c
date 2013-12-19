@@ -9,7 +9,7 @@
 #include <netdb.h>
 #include <string.h>
 
-#define TTLMAX 20
+#define TTLMAX 25
 #define PING 10
 #define TIMEOUT 5
 
@@ -60,7 +60,7 @@ typedef struct packet
 
 int main (int argc, char **argv)
 {
-	int sockfd, ttl, i, paquet_perdu = 0;
+	int sockfd, ttl, i, paquet_perdu = 0, sortie = 0;
 	long int temps, moyenne = 0;
 	fd_set rfd;
 	ICMP_H pkt_s;
@@ -103,30 +103,39 @@ int main (int argc, char **argv)
 	pkt_s.id = htons(0x0001);
 	pkt_s.seq_num = htons(0x0001);
     
-	if (sendto(sockfd, &pkt_s, sizeof(pkt_s), 0, (struct sockaddr*)&server, addrlen ) == -1)
+    while (sortie < 5)
 	{
-		perror("Envoi échoué ");
-		close(sockfd);
-		exit(-1);
+		if (sendto(sockfd, &pkt_s, sizeof(pkt_s), 0, (struct sockaddr*)&server, addrlen ) == -1)
+		{
+			perror("Envoi échoué ");
+			close(sockfd);
+			exit(-1);
+		}
+		printf("Paquet envoyé\n");
+		
+		//Réinitialisation des valeurs necessaire a select
+		FD_ZERO (&rfd);
+		FD_SET (sockfd, &rfd);
+		timeInterval.tv_sec = TIMEOUT; //Timeout a 5 secondes
+		timeInterval.tv_usec = 0;
+		if( select (sockfd+1, &rfd, NULL, NULL, &timeInterval) > 0 ) //Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
+		{
+			sortie = 5;
+			if(recv (sockfd, &pkt_r, sizeof(pkt_r), 0) == -1) //Recuperation de l'information
+			{
+				perror("Rien recu ");
+				close(sockfd);
+				exit(-1);
+			}
+		}
+		sortie++;
 	}
-	printf("Paquet envoyé\n");
 	
-	
-	if(recv (sockfd, &pkt_r, sizeof(pkt_r), 0) == -1)
-	{
-		perror("Rien recu ");
-		close(sockfd);
-		exit(-1);
-	}
 	
 	if(((pkt_r.icmp.type == 0) || (pkt_r.icmp.type == 8)) && (pkt_r.icmp.code == 0) && (pkt_r.icmp.id == pkt_s.id) && (pkt_r.icmp.seq_num == pkt_s.seq_num))
 		printf("Reponse recue OK, destination atteignable.\nChecksum = %x\n", pkt_r.icmp.checksum);
 	else
-	{
-		perror("Reponse mauvaise, destination non atteignable");
-		close(sockfd);
-		exit(-1);
-	}
+		printf("Reponse mauvaise\n");
 
 
 	
