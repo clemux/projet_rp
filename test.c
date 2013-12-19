@@ -61,9 +61,9 @@ int main (int argc, char **argv)
 	fd_set rfd;
 	ICMP_H pkt_s;
 	PACK pkt_r;
-	char *ip_retour;
+	char *ip_retour, ip_retour_dns;
 	socklen_t addrlen;
-	struct sockaddr_in server;
+	struct sockaddr_in server, dns;
 	struct timeval timeInterval;
 	
 	// check the number of args on command line
@@ -130,6 +130,7 @@ int main (int argc, char **argv)
 	pkt_r.icmp.type = 0x0B;
 	ttl = 1;
 	ip_retour = malloc(sizeof(uint32_t));
+	ip_retour_dns = malloc(100*sizeof(char));
 	printf("Lancement de traceroute vers %s, nombre de saut : %d\n", argv[1], TTLMAX);
 	while (ttl < TTLMAX && pkt_r.icmp.type != 0)
 	{
@@ -153,12 +154,16 @@ int main (int argc, char **argv)
 				close(sockfd);
 				exit(-1);
 			}
+			
+			dns.sin_family = AF_INET;
+			dns.sin_addr = pkt_r.ip.ip_src;
 			if(inet_ntop(AF_INET, &pkt_r.ip.ip_src, ip_retour, sizeof(argv[1])*2) == NULL)
 			{
 				perror("inet_ntop merde ");
 				close(sockfd);
 				exit(EXIT_FAILURE);
 			}
+			getnameinfo((struct sockaddr*)&dns, sizeof(dns), ip_retour_dns, sizeof(ip_retour_dns), NULL, 0, 0);
 			printf("%d routeur : %s\n", ttl, ip_retour);
 		}
 		else
@@ -174,11 +179,11 @@ int main (int argc, char **argv)
 }
 
 
-char *getDomaine(char *ip) { 
-	char *domaine = malloc(sizeof(char) * NI_MAXHOST); 
-	struct sockaddr_in sa; 
-	sa.sin_family = AF_INET; 
-	inet_pton(AF_INET, ip, &sa.sin_addr); 
-	getnameinfo((struct sockaddr*)&sa, sizeof(sa), domaine, sizeof(char)*NI_MAXHOST, NULL, 0, 0); 
-	return domaine; 
-}
+//~ char *getDomaine(char *ip) { 
+	//~ char *domaine = malloc(sizeof(char) * NI_MAXHOST); 
+	//~ struct sockaddr_in sa; 
+	//~ sa.sin_family = AF_INET; 
+	//~ inet_pton(AF_INET, ip, &sa.sin_addr); 
+	//~ getnameinfo((struct sockaddr*)&sa, sizeof(sa), domaine, sizeof(char)*NI_MAXHOST, NULL, 0, 0); 
+	//~ return domaine; 
+//~ }
