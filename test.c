@@ -10,7 +10,10 @@
 #include <string.h>
 
 #define TTLMAX 20
+#define PING 10
+#define TIMEOUT 5
 
+/*getnameinfo*/
 
 typedef struct icmp_header
 {
@@ -57,13 +60,14 @@ typedef struct packet
 
 int main (int argc, char **argv)
 {
-	int sockfd, ttl;
+	int sockfd, ttl, i, paquet_perdu = 0;
+	long int temps, moyenne = 0;
 	fd_set rfd;
 	ICMP_H pkt_s;
 	PACK pkt_r;
-	char *ip_retour, *ip_retour_dns;
+	char *ip_retour;
 	socklen_t addrlen;
-	struct sockaddr_in server, dns;
+	struct sockaddr_in server;
 	struct timeval timeInterval;
 	
 	// check the number of args on command line
@@ -115,7 +119,7 @@ int main (int argc, char **argv)
 		exit(-1);
 	}
 	
-	if((pkt_r.icmp.type == 0) && (pkt_r.icmp.code == 0) && (pkt_r.icmp.id == pkt_s.id) && (pkt_r.icmp.seq_num == pkt_s.seq_num))
+	if(((pkt_r.icmp.type == 0) || (pkt_r.icmp.type == 8)) && (pkt_r.icmp.code == 0) && (pkt_r.icmp.id == pkt_s.id) && (pkt_r.icmp.seq_num == pkt_s.seq_num))
 		printf("Reponse recue OK, destination atteignable.\nChecksum = %x\n", pkt_r.icmp.checksum);
 	else
 	{
@@ -130,10 +134,11 @@ int main (int argc, char **argv)
 	pkt_r.icmp.type = 0x0B;
 	ttl = 1;
 	ip_retour = malloc(sizeof(uint32_t));
-	ip_retour_dns = malloc(100*sizeof(char));
 	printf("Lancement de traceroute vers %s, nombre de saut : %d\n", argv[1], TTLMAX);
-	while (ttl < TTLMAX && pkt_r.icmp.type != 0)
+	while (ttl < TTLMAX && strcmp(ip_retour, argv[1]) != 0)
 	{
+		pkt_s.id = pkt_s.id + htons(0x0001);
+		pkt_s.seq_num = pkt_s.seq_num + htons(0x0001);
 		setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)); //Met a jour le ttl sur le socket
 		if (sendto(sockfd, &pkt_s, sizeof(pkt_s), 0, (struct sockaddr*)&server, addrlen ) == -1) //Envoi le paquet ICMP
 		{
@@ -144,7 +149,7 @@ int main (int argc, char **argv)
 		//Réinitialisation des valeurs necessaire a select
 		FD_ZERO (&rfd);
 		FD_SET (sockfd, &rfd);
-		timeInterval.tv_sec = 5; //Timeout a 5 secondes
+		timeInterval.tv_sec = TIMEOUT; //Timeout a 5 secondes
 		timeInterval.tv_usec = 0;
 		if( select (sockfd+1, &rfd, NULL, NULL, &timeInterval) > 0 ) //Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
 		{
@@ -155,16 +160,13 @@ int main (int argc, char **argv)
 				exit(-1);
 			}
 			
-			dns.sin_family = AF_INET;
-			if(inet_ntop(AF_INET, &pkt_r.ip.ip_src, ip_retour, sizeof(argv[1])*2) == NULL)
+			if(inet_ntop(AF_INET, &pkt_r.ip.ip_src, ip_retour, sizeof(argv[1])*2) == NULL) //Stock l'ip du routeur dans ip_retour en format texte
 			{
 				perror("inet_ntop merde ");
 				close(sockfd);
 				exit(EXIT_FAILURE);
 			}
-			inet_pton(AF_INET, ip_retour, &dns.sin_addr);
-			getnameinfo((struct sockaddr*)&dns, sizeof(dns), ip_retour_dns, sizeof(ip_retour_dns), NULL, 0, 0);
-			printf("%d routeur : %s (%s)\n", ttl, ip_retour_dns, ip_retour);
+			printf("%d routeur : (%s)\n", ttl, ip_retour);
 		}
 		else
 		{
@@ -173,17 +175,70 @@ int main (int argc, char **argv)
 		ttl++;
 	}
 	
+	//PING
+	ttl = 64;
+	setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)); //Met a jour le ttl sur le socket
+	printf("Lancement de Ping, envois de %d paquet(s)\n", PING);
+	for (i = 0; i < PING; i++)
+	{
+		pkt_s.id = pkt_s.id + htons(0x0001);
+		pkt_s.seq_num = pkt_s.seq_num + htons(0x0001);
+		if (sendto(sockfd, &pkt_s, sizeof(pkt_s), 0, (struct sockaddr*)&server, addrlen ) == -1) //Envoi le paquet ICMP
+		{
+			perror("Envoi échoué ");
+			close(sockfd);
+			exit(-1);
+		}
+		//Réinitialisation des valeurs necessaire a select
+		FD_ZERO (&rfd);
+		FD_SET (sockfd, &rfd);
+		timeInterval.tv_sec = TIMEOUT; //Timeout a 5 secondes
+		timeInterval.tv_usec = 0;
+		if( select (sockfd+1, &rfd, NULL, NULL, &timeInterval) > 0 ) //Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
+		{
+			if(recv (sockfd, &pkt_r, sizeof(pkt_r), 0) == -1) //Recuperation de l'information
+			{
+				perror("Rien recu ");
+				close(sockfd);
+				exit(-1);
+			}
+			
+
+			if(inet_ntop(AF_INET, &pkt_r.ip.ip_src, ip_retour, sizeof(argv[1])*2) == NULL) //Stock l'ip du routeur dans ip_retour en format texte
+			{
+				perror("inet_ntop merde ");
+				close(sockfd);
+				exit(EXIT_FAILURE);
+			}
+			
+			if(pkt_r.icmp.type == 0 && pkt_r.icmp.id == pkt_s.id && pkt_r.icmp.seq_num == pkt_s.seq_num)
+			{
+				temps = (1000000 - (long int)timeInterval.tv_usec) / 1000;
+				if (TIMEOUT-1-timeInterval.tv_sec > 0)
+				{
+					printf("%d time =  %ld sec et %ld ms\n", i+1, (long int)TIMEOUT-1-timeInterval.tv_sec, temps);
+					moyenne += 1000 * (long int)TIMEOUT-1-timeInterval.tv_sec;
+					moyenne += temps;
+				}
+				else
+				{
+					printf("%d time = %ld ms\n", i+1, temps);
+					moyenne += temps;
+				}
+			}
+		}
+		else
+		{
+			paquet_perdu++;
+		}
+	}
+	
+	printf("Moyenne : %ld ms\nNombre de Paquet perdu : %d\n", moyenne/i, paquet_perdu);
+	
 	
 	close(sockfd);
 	return 0;
 }
 
 
-//~ char *getDomaine(char *ip) { 
-	//~ char *domaine = malloc(sizeof(char) * NI_MAXHOST); 
-	//~ struct sockaddr_in sa; 
-	//~ sa.sin_family = AF_INET; 
-	//~ inet_pton(AF_INET, ip, &sa.sin_addr); 
-	//~ getnameinfo((struct sockaddr*)&sa, sizeof(sa), domaine, sizeof(char)*NI_MAXHOST, NULL, 0, 0); 
-	//~ return domaine; 
-//~ }
+
