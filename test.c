@@ -61,7 +61,7 @@ int main (int argc, char **argv)
 	fd_set rfd;
 	ICMP_H pkt_s;
 	PACK pkt_r;
-	char *ip_retour, ip_retour_dns;
+	char *ip_retour, *ip_retour_dns;
 	socklen_t addrlen;
 	struct sockaddr_in server, dns;
 	struct timeval timeInterval;
@@ -156,15 +156,15 @@ int main (int argc, char **argv)
 			}
 			
 			dns.sin_family = AF_INET;
-			dns.sin_addr = pkt_r.ip.ip_src;
 			if(inet_ntop(AF_INET, &pkt_r.ip.ip_src, ip_retour, sizeof(argv[1])*2) == NULL)
 			{
 				perror("inet_ntop merde ");
 				close(sockfd);
 				exit(EXIT_FAILURE);
 			}
+			inet_pton(AF_INET, ip_retour, &dns.sin_addr);
 			getnameinfo((struct sockaddr*)&dns, sizeof(dns), ip_retour_dns, sizeof(ip_retour_dns), NULL, 0, 0);
-			printf("%d routeur : %s\n", ttl, ip_retour);
+			printf("%d routeur : %s (%s)\n", ttl, ip_retour_dns, ip_retour);
 		}
 		else
 		{
