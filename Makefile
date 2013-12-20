@@ -6,6 +6,14 @@ BIN_DIR = bin
 EXEC = test # Programme principal
 MAIN_OBJECTS = test.o icmp.o ip.o
 
+TRACEROUTE_EXEC = traceroute
+TRACEROUTE_OBJECTS = traceroute.o icmp.o ip.o utils.o
+
+PING_EXEC = ping
+PING_OBJECTS = ping.o icmp.o ip.o utils.o
+
+
+
 #TEST_EXEC = tests # Exécutable pour les tests unitaires
 #TEST_OBJECTS = tests.o base.o couleur.o arbq.o
 
@@ -18,7 +26,7 @@ CFLAGS = -g -std=gnu99 -pedantic -Wall -Wextra -pedantic -Wmissing-declarations 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-all: dirs $(EXEC) $(TEST_EXEC) information
+all: dirs $(EXEC) $(TRACEROUTE_EXEC) $(PING_EXEC) information
 
 information:
 	@echo Compilation terminée
@@ -31,8 +39,13 @@ dirs:
 $(EXEC): $(addprefix $(OBJ_DIR)/, $(MAIN_OBJECTS))
 	$(CC) -o $(BIN_DIR)/$@ $^ $(LDLIBS)
 
-# $(TEST_EXEC): $(addprefix $(OBJ_DIR)/, $(TEST_OBJECTS))
-#	$(CC) -o $(BIN_DIR)/$@ $^ $(LDLIBS)
+$(TRACEROUTE_EXEC): $(addprefix $(OBJ_DIR)/, $(TRACEROUTE_OBJECTS))
+	$(CC) -o $(BIN_DIR)/$@ $^ $(LDLIBS)
+
+$(PING_EXEC): $(addprefix $(OBJ_DIR)/, $(PING_OBJECTS))
+	$(CC) -o $(BIN_DIR)/$@ $^ $(LDLIBS)
+
+
 
 .PHONY: doc clean information
 

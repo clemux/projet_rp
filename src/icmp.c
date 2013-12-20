@@ -2,6 +2,7 @@
 #include "ip.h"
 #include <stdlib.h> // malloc
 #include <arpa/inet.h> // htons
+#include <stdio.h> // perror
 
 struct icmp_header* prepare_icmp_header(uint8_t code, uint8_t type,
                                         unsigned int seq_num) {

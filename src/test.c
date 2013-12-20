@@ -15,7 +15,7 @@
 #include "dbg.h"
 
 #define TTLMAX 25
-#define PING 100
+#define PING 10
 #define TIMEOUT 5
 
 /*getnameinfo*/
@@ -29,8 +29,7 @@ int main (int argc, char **argv)
     struct icmp_header *pkt_s;
     struct packet pkt_r;
     char *ip_retour;
-    socklen_t addrlen;
-    struct sockaddr_in server;
+    struct sockaddr_in destination;
     struct timeval timeInterval;
 
     // check the number of args on command line
@@ -48,11 +47,10 @@ int main (int argc, char **argv)
         exit(EXIT_FAILURE);
     }
     
-    addrlen = sizeof(struct sockaddr_in);
-    server.sin_family = AF_INET;
+    destination.sin_family = AF_INET;
 
     // conversion de l'adresse donnée en sockaddr_in
-    if(inet_pton(AF_INET, argv[1], (struct sockaddr *) &server.sin_addr) != 1)
+    if(inet_pton(AF_INET, argv[1], (struct sockaddr *) &destination.sin_addr) != 1)
     {
         perror("inet_pton");
         close(sockfd);
@@ -61,7 +59,7 @@ int main (int argc, char **argv)
     
     /* Preparation du paquet ICMP request */
     for (try=0; try < 5; try++) {
-        if ((pkt_s = send_echo_request(sockfd, &server)) == NULL) {
+        if ((pkt_s = send_echo_request(sockfd, &destination)) == NULL) {
             debug("Envoie echo request échoué: %d", try);
             close(sockfd);
             exit(1);
@@ -103,57 +101,6 @@ int main (int argc, char **argv)
 
     free(pkt_s);
     
-//TRACEROUTE
-    pkt_r.icmp.type = 0x0B;
-    ttl = 1;
-    ip_retour = malloc(sizeof(uint32_t));
-    printf("Lancement de traceroute vers %s, nombre de saut : %d\n",
-           argv[1], TTLMAX);
-    while (ttl < TTLMAX && strcmp(ip_retour, argv[1]) != 0)
-    {
-        //Met a jour le ttl sur le socket
-        setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)); 
-        
-        if ((send_echo_request(sockfd, &server) == NULL)) {
-            perror("Envoi échoué ");
-            close(sockfd);
-            exit(-1);
-        }
-
-        //Réinitialisation des valeurs necessaire a select
-        FD_ZERO (&rfd);
-        FD_SET (sockfd, &rfd);
-        timeInterval.tv_sec = TIMEOUT; //Timeout a 5 secondes
-        timeInterval.tv_usec = 0;
-        
-        //Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
-        if( select (sockfd+1, &rfd, NULL, NULL, &timeInterval) > 0 )
-        {
-             //Recuperation de l'information
-            if (recv (sockfd, &pkt_r, sizeof(pkt_r), 0) == -1)
-            {
-                perror("Rien recu ");
-                close(sockfd);
-                exit(-1);
-            }
-
-            // Stock l'ip du routeur dans ip_retour en format texte
-            if(inet_ntop(AF_INET, &(pkt_r.ip.ip_src), ip_retour,
-                         sizeof(argv[1])*2) == NULL) 
-            {
-                perror("inet_ntop merde ");
-                close(sockfd);
-                exit(EXIT_FAILURE);
-            }
-            printf("%d routeur : (%s)\n", ttl, ip_retour);
-        }
-        else
-        {
-            printf("%d Pas de reponse\n", ttl);
-        }
-        ttl++;
-    }
-    
 //PING
     ttl = 64;
     //Met a jour le ttl sur le socket
@@ -162,7 +109,7 @@ int main (int argc, char **argv)
     for (i = 0; i < PING; i++)
     {
         //Envoi le paquet ICMP
-        if ((pkt_s = send_echo_request(sockfd, &server)) == NULL)
+        if ((pkt_s = send_echo_request(sockfd, &destination)) == NULL)
         {
             perror("Envoi échoué ");
             close(sockfd);
@@ -216,6 +163,8 @@ int main (int argc, char **argv)
         {
             paquet_perdu++;
         }
+        free(pkt_s);
+        pkt_s = NULL;
     }
     
     printf("Moyenne : %ld ms\nNombre de Paquet perdu : %d\n", moyenne/i,
