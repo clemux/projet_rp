@@ -3,8 +3,8 @@ INCLUDE_DIR = include
 OBJ_DIR = obj
 BIN_DIR = bin
 
-EXEC = test # Programme principal
-MAIN_OBJECTS = test.o icmp.o ip.o 
+NETANALYZER_EXEC = netanalyzer
+NETANALYZER_OBJECTS = netanalyzer.o icmp.o ip.o probe.o utils.o
 
 TRACEROUTE_EXEC = traceroute
 TRACEROUTE_OBJECTS = traceroute.o icmp.o ip.o utils.o probe.o
@@ -26,7 +26,7 @@ CFLAGS = -g -std=gnu99 -pedantic -Wall -Wextra -pedantic -Wmissing-declarations 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-all: dirs $(EXEC) $(TRACEROUTE_EXEC) $(PING_EXEC) information
+all: dirs $(NETANALYZER_EXEC) $(TRACEROUTE_EXEC) $(PING_EXEC) information
 
 information:
 	@echo Compilation terminée
@@ -36,7 +36,7 @@ information:
 dirs:
 	mkdir -p bin obj
 
-$(EXEC): $(addprefix $(OBJ_DIR)/, $(MAIN_OBJECTS))
+$(NETANALYZER_EXEC): $(addprefix $(OBJ_DIR)/, $(NETANALYZER_OBJECTS))
 	$(CC) -o $(BIN_DIR)/$@ $^ $(LDLIBS)
 
 $(TRACEROUTE_EXEC): $(addprefix $(OBJ_DIR)/, $(TRACEROUTE_OBJECTS))
