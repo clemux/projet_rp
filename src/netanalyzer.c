@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #define NB_PROBES 3 // pour traceroute
+#define TTLMAX 25
 
 int main(int argc, char *argv[])
 {
@@ -43,7 +44,8 @@ int main(int argc, char *argv[])
     if (probe.status == PROBE_OK)
         printf("%s atteint (essai %d) (%ld ms)\n", argv[1], i, probe.time);
 
-    do_traceroute(sockfd, &destination, NB_PROBES);
+    printf("Découverte des routes vers %s\n", argv[1]);
+    do_traceroute(sockfd, &destination, NB_PROBES, TTLMAX);
 
 
     return 0;
