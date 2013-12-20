@@ -1,6 +1,7 @@
 #include "packet.h"
 #include "utils.h"
 #include "dbg.h"
+#include "probe.h"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -17,16 +18,12 @@
 
 
 int main(int argc, char *argv[]) {
-    struct packet pkt_r;
-    struct icmp_header *pkt_s;
+    struct probe_response probe_response;
     unsigned int ttl;
     int sockfd;
-    char *ip_string = malloc(sizeof(uint32_t)); // adresse ip à afficher
     struct sockaddr_in destination; // hote vers lequel on veut la liste des routes
-    struct timeval interval;
-    int res;
-    int i;
-    long int time, mean = 0;
+    int i, res;
+    long int sum_time = 0;
     unsigned int lost_packets = 0;
     
 
@@ -57,60 +54,27 @@ int main(int argc, char *argv[]) {
     ttl = DEFAULT_TTL;
     setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
     printf("Lancement de Ping, envois de %d paquet(s)\n", NB_PING);
+    sum_time = 0;
     for (i = 0; i < NB_PING; i++)
     {
-        //Envoi le paquet ICMP
-        if ((pkt_s = send_echo_request(sockfd, &destination)) == NULL)
-        {
-            perror("Envoi échoué ");
-            close(sockfd);
-            exit(-1);
-        }
-        //Réinitialisation des valeurs necessaire a select
-        interval.tv_sec = TIMEOUT;
-        interval.tv_usec = 0;
-        if (receive_packet(sockfd, &pkt_r, &interval) <= 0) {
+        probe_response = probe_icmp(sockfd, &destination);
+        
+        if (probe_response.status != PROBE_OK)
             lost_packets++;
+        else {
+            sum_time += probe_response.time;
+            printf("icmp_req=%d on %s, time=%ld ms, ttl=%d\n",
+                   i + 1, probe_response.source_ip, probe_response.time,
+                   probe_response.ttl);
         }
-        
-        // Stock l'ip du routeur dans ip_string en format texte
-        if(inet_ntop(AF_INET, &(pkt_r.ip.ip_src), ip_string,
-                     sizeof(argv[1])*2) == NULL)
-        {
-            perror("inet_ntop merde ");
-            close(sockfd);
-            exit(EXIT_FAILURE);
-        }
-        
-        if(pkt_r.icmp.type == 0 &&
-           pkt_r.icmp.id == pkt_s->id &&
-           pkt_r.icmp.seq_num == pkt_s->seq_num)
-        {
-            time = (1000000 - (long int) interval.tv_usec) / 1000;
-            if (TIMEOUT - 1 - interval.tv_sec > 0)
-            {
-                printf("%d time =  %ld sec et %ld ms\n", i + 1,
-                       (long int)TIMEOUT - 1 - interval.tv_sec, time);
-                mean += 1000 * (long int)TIMEOUT - 1-interval.tv_sec;
-                mean += time;
-            }
-            else
-            {
-                printf("%d time = %ld ms\n", i + 1, time);
-                mean += time;
-            }
-        }
+                
     }
 
-    free(pkt_s);
-    pkt_s = NULL;
-    free(ip_string);
-    
-    printf("Moyenne : %ld ms\nNombre de Paquet perdu : %d\n", mean/i,
+    printf("Moyenne : %ld ms\nNombre de Paquet perdu : %d\n", sum_time/i,
            lost_packets);
-
+    
     close(sockfd);
-
-
-return 0;
+    
+    
+    return 0;
 }

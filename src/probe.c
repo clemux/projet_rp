@@ -47,6 +47,7 @@ struct probe_response probe_icmp(int sockfd, struct sockaddr_in *destination) {
     }
 
     response.icmp = pkt_r.icmp;
+    response.ttl = pkt_r.ip.ttl;
 
     if(!(pkt_r.icmp.type == 0 &&
          pkt_r.icmp.id == pkt_s->id &&
