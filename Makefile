@@ -4,10 +4,10 @@ OBJ_DIR = obj
 BIN_DIR = bin
 
 NETANALYZER_EXEC = netanalyzer
-NETANALYZER_OBJECTS = netanalyzer.o icmp.o ip.o probe.o utils.o
+NETANALYZER_OBJECTS = netanalyzer.o icmp.o ip.o probe.o utils.o traceroute.o
 
 TRACEROUTE_EXEC = traceroute
-TRACEROUTE_OBJECTS = traceroute.o icmp.o ip.o utils.o probe.o
+TRACEROUTE_OBJECTS = traceroute_main.o traceroute.o icmp.o ip.o utils.o probe.o
 
 PING_EXEC = ping
 PING_OBJECTS = ping.o icmp.o ip.o utils.o probe.o

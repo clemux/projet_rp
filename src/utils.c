@@ -1,4 +1,6 @@
 #include "utils.h"
+#include "probe.h"
+
 #include <arpa/inet.h> // inet_pton
 #include <stdio.h> // perror
 #include <stdlib.h> // malloc

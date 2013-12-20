@@ -1,10 +1,13 @@
 #include "probe.h"
 #include "utils.h"
+#include "traceroute.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#define NB_PROBES 3 // pour traceroute
 
 int main(int argc, char *argv[])
 {
@@ -40,6 +43,7 @@ int main(int argc, char *argv[])
     if (probe.status == PROBE_OK)
         printf("%s atteint (essai %d) (%ld ms)\n", argv[1], i, probe.time);
 
+    do_traceroute(sockfd, &destination, NB_PROBES);
 
 
     return 0;
