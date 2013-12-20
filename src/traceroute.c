@@ -19,7 +19,6 @@ int main(int argc, char *argv[]) {
     char *ip_string;
     struct sockaddr_in destination; // hote vers lequel on veut la liste des routes
 
-
     int res; // valeur de retour utilisée par différentes fonctions
 
     // check the number of args on command line
@@ -59,7 +58,7 @@ int main(int argc, char *argv[]) {
             exit(-1);
         }
 
-        if (receive_packet(sockfd, &pkt_r) == -1) {
+        if (receive_packet(sockfd, &pkt_r, NULL) == -1) {
             close(sockfd);
             exit(1);
         }

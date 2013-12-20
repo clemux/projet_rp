@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <arpa/inet.h> // inet_pton
 #include <stdio.h> // perror
+#include <stdlib.h> // malloc
 
 #define TIMEOUT 5
 
@@ -14,17 +15,20 @@ int ip_to_sinaddr(char *ip, struct in_addr *saddr) {
     return 0;
 }
 
-int receive_packet(int sockfd, struct packet *to_packet) {
+int receive_packet(int sockfd, struct packet *to_packet,
+                   struct timeval *interval) {
     fd_set rfd;
-    struct timeval time_interval;
     // Initialisation des valeurs necessaire a select
     FD_ZERO (&rfd);
     FD_SET (sockfd, &rfd);
-    time_interval.tv_sec = TIMEOUT; //Timeout a 5 secondes
-    time_interval.tv_usec = 0;
+    if (interval == NULL) {
+        interval = malloc(sizeof(struct timeval));
+        interval->tv_sec = TIMEOUT; //Timeout a 5 secondes
+        interval->tv_usec = 0;
+    }
     
     // Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
-    if( select (sockfd+1, &rfd, NULL, NULL, &time_interval) > 0 )
+    if( select (sockfd+1, &rfd, NULL, NULL, interval) > 0 )
     {
         //Recuperation du paquet
         if (recv (sockfd, to_packet, sizeof(struct packet), 0) == -1)
