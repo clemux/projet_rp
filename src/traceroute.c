@@ -17,7 +17,6 @@
 #define NB_PROBES 3
 
 int main(int argc, char *argv[]) {
-    struct packet pkt_r;
     unsigned int ttl, i;
     int sockfd;
     struct sockaddr_in destination; // hote vers lequel on veut la liste des routes
