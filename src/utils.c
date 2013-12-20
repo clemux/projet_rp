@@ -18,6 +18,7 @@ int ip_to_sinaddr(char *ip, struct in_addr *saddr) {
 int receive_packet(int sockfd, struct packet *to_packet,
                    struct timeval *interval) {
     fd_set rfd;
+    int res;
     // Initialisation des valeurs necessaire a select
     FD_ZERO (&rfd);
     FD_SET (sockfd, &rfd);
@@ -28,7 +29,7 @@ int receive_packet(int sockfd, struct packet *to_packet,
     }
     
     // Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
-    if( select (sockfd+1, &rfd, NULL, NULL, interval) > 0 )
+    if((res = select (sockfd+1, &rfd, NULL, NULL, interval)) > 0)
     {
         //Recuperation du paquet
         if (recv (sockfd, to_packet, sizeof(struct packet), 0) == -1)
@@ -37,5 +38,7 @@ int receive_packet(int sockfd, struct packet *to_packet,
             return -1;
         }
     }
-    return 0;
+    else if (res == 0)
+        return 0;
+    return 1;
 }

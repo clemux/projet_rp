@@ -11,9 +11,10 @@
 
 
 
-#define NB_PING 10
+#define NB_PING 20
 #define TIMEOUT 5
 #define DEFAULT_TTL 64
+
 
 int main(int argc, char *argv[]) {
     struct packet pkt_r;
@@ -68,7 +69,7 @@ int main(int argc, char *argv[]) {
         //Réinitialisation des valeurs necessaire a select
         interval.tv_sec = TIMEOUT;
         interval.tv_usec = 0;
-        if (receive_packet(sockfd, &pkt_r, &interval) == -1) {
+        if (receive_packet(sockfd, &pkt_r, &interval) <= 0) {
             lost_packets++;
         }
         
@@ -103,6 +104,7 @@ int main(int argc, char *argv[]) {
 
     free(pkt_s);
     pkt_s = NULL;
+    free(ip_string);
     
     printf("Moyenne : %ld ms\nNombre de Paquet perdu : %d\n", mean/i,
            lost_packets);
