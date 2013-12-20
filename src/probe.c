@@ -1,3 +1,10 @@
+/**
+* \file probe.c
+* \brief Contient la fonction d'envoi de sonde
+* \author Arnaud Petit
+* \author Clement Schreiner
+*/
+
 #include "probe.h"
 #include "utils.h"
 #include "icmp.h"
@@ -9,7 +16,13 @@
 
 
     
-
+/**
+ * \fn struct probe_response probe_icmp(int sockfd, struct sockaddr_in *destination)
+ * \brief traite le lancement et la reception d'une sonde sur le réseau
+ * \param sockfd, socket a utilisé pour le ping
+ * \param destination, pointeur vers la structure sockaddr_in contenant les informations de la destination des paquets
+ * \return une structure probe_response contenant les informations necessaire du paquet recu
+ */
 struct probe_response probe_icmp(int sockfd, struct sockaddr_in *destination) {
     struct packet pkt_r;
     struct icmp_header *pkt_s;

@@ -19,7 +19,7 @@
 
 
 /**
- * \def NB_PING Nombre de saut pour ping
+ * \def NB_PING Nombre de ping
  */
 #define NB_PING 20
 /**
@@ -32,11 +32,12 @@
 #define DEFAULT_TTL 64
 
 /**
- * \fn ping()
+ * \fn do_ping(int sockfd, struct sockaddr_in *destination, unsigned int packet_count, unsigned int interval)
  * \brief lance le ping
- * \param 
- * \param 
- * \return
+ * \param sockfd, socket a utilisé pour le ping
+ * \param destination, pointeur vers la structure sockaddr_in contenant les informations de la destination des paquets
+ * \param packet_count, 
+ * \param interval, temps d'attente entre chaque sonde
  */
 
 void do_ping(int sockfd, struct sockaddr_in *destination,

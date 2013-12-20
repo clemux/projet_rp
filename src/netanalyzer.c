@@ -14,10 +14,14 @@
 
 struct sigaction action;
 
+/**
+ * \struct statistics
+ * \brief structure contenant les informations calculant les statistiques du programme
+ */
 struct statistics {
-    unsigned int nb_probes;
-    unsigned int nb_failed_probes;
-    unsigned int nb_route_changes;
+    unsigned int nb_probes; /** nombre de sonde envoyees */
+    unsigned int nb_failed_probes; /** nombre de sondes perdues */
+    unsigned int nb_route_changes; /** nombre de fois où la route a du etre recalculee */
 };
 
 struct statistics stats;

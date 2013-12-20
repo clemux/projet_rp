@@ -29,14 +29,13 @@
 #define NB_PROBES 3
 
 /**
- * \fn traceroute()
+ * \fn do_traceroute(int sockfd, struct sockaddr_in *destination, unsigned int nb_probes, unsigned int ttlmax)
  * \brief lance le traceroute
- * \param 
- * \param 
- * \return
+ * \param sockfd, socket a utilisé pour le traceroute
+ * \param destination, pointeur vers la structure sockaddr_in contenant les informations de la destination des paquets
+ * \param nb_probes, nombre de sondes envoyé par incrémentation de ttl
+ * \param ttlmax, nombre de saut maximal du traceroute
  */
-
-
 void do_traceroute(int sockfd, struct sockaddr_in *destination,
                    unsigned int nb_probes, unsigned int ttlmax) {
     struct probe_response *probe_responses = malloc(nb_probes*sizeof(struct probe_response));
