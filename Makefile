@@ -31,7 +31,9 @@ all: dirs $(NETANALYZER_EXEC) $(TRACEROUTE_EXEC) $(PING_EXEC) information
 information:
 	@echo Compilation terminée
 #	@echo Pour lancer les tests unitaires: bin/$(TEST_EXEC)
-	@echo Pour lancer le programme de démonstration: bin/$(EXEC)
+	@echo Pour lancer le programme le net analyzer: sudo bin/$(EXEC) adresse
+	@echo Pour lancer traceroute: sudo bin/$(TRACEROUTE_EXEC) adresse
+	@echo Pour lancer ping: sudo bin/$(PING_EXEC) adresse
 
 dirs:
 	mkdir -p bin obj
