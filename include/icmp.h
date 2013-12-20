@@ -7,6 +7,7 @@
 #define ECHO 0
 #define ECHO_REQUEST 8
 #define ECHO_REPLY 0
+#define TIME_EXCEEDED 11
 
 #include <netinet/in.h>
 
