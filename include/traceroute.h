@@ -1,3 +1,10 @@
+/**
+* \file traceroute.h
+* \brief Contient la definition de la fonction traceroute
+* \author Arnaud Petit
+* \author Clement Schreiner
+*/
+
 #ifndef TRACEROUTE_H
 #define TRACEROUTE_H
 
