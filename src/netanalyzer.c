@@ -120,6 +120,7 @@ int main(int argc, char *argv[])
     printf("-------------------------------------------------\n");
     printf("Envoi d'une sonde ICMP toutes les %d secondes.\n", INTERVAL);
     printf("Écriture dans net_analysis.log\n");
+    printf("Envoyez SIGINT (CTRL + C) pour stopper le programme et afficher l'analyse\n");
 
     ttl = 0;
     stats.nb_probes = 0;
