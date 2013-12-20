@@ -37,8 +37,12 @@ int receive_packet(int sockfd, struct packet *to_packet,
             perror("Rien recu ");
             return -1;
         }
+        return 1;
     }
     else if (res == 0)
         return 0;
-    return 1;
+    else {
+        perror("select");
+        return -1;
+    }
 }
