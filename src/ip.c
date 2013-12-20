@@ -16,6 +16,7 @@ uint16_t checksum(uint16_t *buffer, uint32_t size) {
     
     sum = (sum >> 16) + (sum & 0xffff);
     sum += (sum >>16);
-    
-    return (uint16_t)(~sum); /* on retourne le complément à 1 de la somme */
+
+    /* on retourne le complément à 1 de la somme */
+    return (uint16_t)(~sum);
 }
