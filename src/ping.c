@@ -5,13 +5,14 @@
 * \author Clement Schreiner
 */
 
+#include "ping.h"
 #include "packet.h"
 #include "utils.h"
 #include "dbg.h"
 #include "probe.h"
 
+
 #include <arpa/inet.h>
-#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/socket.h>
@@ -45,14 +46,13 @@ void do_ping(int sockfd, struct sockaddr_in *destination,
     unsigned int lost_packets = 0;
     long int sum_time;
     struct probe_response probe_response;
-    unsigned int ttl;
-    int i;
+    unsigned int ttl, i;
     
     ttl = DEFAULT_TTL;
     setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
-    printf("Lancement de Ping, envois de %d paquet(s)\n", NB_PING);
+    printf("Lancement de Ping, envois de %d paquet(s)\n", packet_count);
     sum_time = 0;
-    for (i = 0; i < NB_PING; i++)
+    for (i = 0; i < packet_count; i++)
     {
         probe_response = probe_icmp(sockfd, destination);
         
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 
     if((sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
         if (errno == EPERM)
-            debug("Le programme doit être lancé en root.\n");
+            fprintf(stderr, "Le programme doit être lancé en root.\n");
         else
             perror("Impossible d'ouvrir la socket ");
         close(sockfd);

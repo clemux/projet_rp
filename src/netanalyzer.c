@@ -8,6 +8,7 @@
 #include "probe.h"
 #include "utils.h"
 #include "traceroute.h"
+#include "netanalyzer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,8 +45,8 @@ void end_analysis(void) {
 
     printf("Nombre de sondes envoyées: %d\n", stats.nb_probes);
     printf("Nombre de sondes sans réponse: %d\n", stats.nb_failed_probes);
-    printf("Taux d'erreur: %f %\n",
-           ((float) stats.nb_failed_probes / (float) stats.nb_probes))*100;
+    printf("Taux d'erreur: %f %% \n",
+           (float) ((float) stats.nb_failed_probes / (float) stats.nb_probes)*100);
     printf("La route vers l'hote a changé %d fois.\n", stats.nb_route_changes);
     exit(0);
 }
@@ -56,6 +57,8 @@ void end_analysis(void) {
  * lance la fonction end_analysis
  */
 void handle_sigint(int sig) {
+    (void) sig; // ceci est complètement inutile, mais on nous demande de compiler
+               // en -Werror... C'est absurde d'être obligé de faire ça.
     end_analysis();
 }
 
