@@ -7,7 +7,7 @@ EXEC = test # Programme principal
 MAIN_OBJECTS = test.o icmp.o ip.o
 
 TRACEROUTE_EXEC = traceroute
-TRACEROUTE_OBJECTS = traceroute.o icmp.o ip.o utils.o
+TRACEROUTE_OBJECTS = traceroute.o icmp.o ip.o utils.o probe.o
 
 PING_EXEC = ping
 PING_OBJECTS = ping.o icmp.o ip.o utils.o
