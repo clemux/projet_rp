@@ -4,15 +4,15 @@ OBJ_DIR = obj
 BIN_DIR = bin
 
 EXEC = test # Programme principal
-MAIN_OBJECTS = test.o icmp.o 
+MAIN_OBJECTS = test.o icmp.o ip.o
 
 #TEST_EXEC = tests # Exécutable pour les tests unitaires
 #TEST_OBJECTS = tests.o base.o couleur.o arbq.o
 
 
 CC=gcc
-LDLIBS = -lm
-CFLAGS = -g -Wall -Wextra -I$(INCLUDE_DIR)
+LDLIBS = 
+CFLAGS = -g -std=gnu99 -pedantic -Wall -Wextra -pedantic -Wmissing-declarations -Wmissing-prototypes -Wredundant-decls -Wshadow -Wbad-function-cast -Wcast-qual -I$(INCLUDE_DIR)
 
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c

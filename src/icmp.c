@@ -1,7 +1,10 @@
 #include "icmp.h"
+#include "ip.h"
+#include <stdlib.h> // malloc
+#include <arpa/inet.h> // htons
 
-icmp_header_t* prepare_icmp_header(uint8_t code, uint8_t type) {
-    icmp_header_t *header = malloc(sizeof(struct icmp_header));
+struct icmp_header* prepare_icmp_header(uint8_t code, uint8_t type) {
+    struct icmp_header *header = malloc(sizeof(struct icmp_header));
     header->type = type;
     header->code = code;
     header->checksum = htons(0x0000);
