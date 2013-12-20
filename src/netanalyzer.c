@@ -1,3 +1,10 @@
+/**
+* \file netanalyzer.c
+* \brief contient le main ainsi que la structure permettant l'analyse statistiques
+* \author Arnaud Petit
+* \author Clement Schreiner
+*/
+
 #include "probe.h"
 #include "utils.h"
 #include "traceroute.h"
@@ -26,6 +33,10 @@ struct statistics {
 
 struct statistics stats;
 
+/**
+ * \fn void end_analysis(void)
+ * \brief affiche les statistiques de programme
+ */
 void end_analysis(void) {
     printf("----------------\n");
     printf("FIN DE L'ANALYSE\n");
@@ -39,7 +50,11 @@ void end_analysis(void) {
     exit(0);
 }
 
-
+/**
+ * \fn void handle_sigint(int sig
+ * \brief handler de la structure sigaction,
+ * lance la fonction end_analysis
+ */
 void handle_sigint(int sig) {
     end_analysis();
 }
