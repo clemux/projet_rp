@@ -16,15 +16,42 @@
 #define TIMEOUT 5
 #define DEFAULT_TTL 64
 
-
-int main(int argc, char *argv[]) {
+void do_ping(int sockfd, struct sockaddr_in *destination,
+             unsigned int packet_count, unsigned int interval) {
+    unsigned int lost_packets = 0;
+    long int sum_time;
     struct probe_response probe_response;
     unsigned int ttl;
+    int i;
+    
+    ttl = DEFAULT_TTL;
+    setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+    printf("Lancement de Ping, envois de %d paquet(s)\n", NB_PING);
+    sum_time = 0;
+    for (i = 0; i < NB_PING; i++)
+    {
+        probe_response = probe_icmp(sockfd, destination);
+        
+        if (probe_response.status != PROBE_OK)
+            lost_packets++;
+        else {
+            sum_time += probe_response.time;
+            printf("icmp_req=%d on %s, time=%ld ms, ttl=%d\n",
+                   i + 1, probe_response.source_ip, probe_response.time,
+                   probe_response.ttl);
+        }
+        sleep(interval);
+    }
+    printf("Moyenne : %ld ms\nNombre de Paquet perdu : %d\n", sum_time/i,
+           lost_packets);
+    
+}
+
+
+int main(int argc, char *argv[]) {
     int sockfd;
     struct sockaddr_in destination; // hote vers lequel on veut la liste des routes
-    int i, res;
-    long int sum_time = 0;
-    unsigned int lost_packets = 0;
+    int res;
     
 
     if(argc != 2)
@@ -49,29 +76,8 @@ int main(int argc, char *argv[]) {
     if (res == -1)
         exit(1);
 
-
+    do_ping(sockfd, &destination, NB_PING, 1);
     
-    ttl = DEFAULT_TTL;
-    setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
-    printf("Lancement de Ping, envois de %d paquet(s)\n", NB_PING);
-    sum_time = 0;
-    for (i = 0; i < NB_PING; i++)
-    {
-        probe_response = probe_icmp(sockfd, &destination);
-        
-        if (probe_response.status != PROBE_OK)
-            lost_packets++;
-        else {
-            sum_time += probe_response.time;
-            printf("icmp_req=%d on %s, time=%ld ms, ttl=%d\n",
-                   i + 1, probe_response.source_ip, probe_response.time,
-                   probe_response.ttl);
-        }
-                
-    }
-
-    printf("Moyenne : %ld ms\nNombre de Paquet perdu : %d\n", sum_time/i,
-           lost_packets);
     
     close(sockfd);
     
