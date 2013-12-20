@@ -52,7 +52,7 @@ void end_analysis(void) {
 }
 
 /**
- * \fn void handle_sigint(int sig
+ * \fn void handle_sigint(int sig)
  * \brief handler de la structure sigaction,
  * lance la fonction end_analysis
  */
@@ -64,7 +64,13 @@ void handle_sigint(int sig) {
 
 
 
-
+/**
+ * \fn int main(int argc, char *argv[])
+ * \brief fonction principale du programme
+ * \param argc, nombre d'argument donner au programme
+ * \param argv, pointeur vers le tableau contenant les arguments du programme
+ * \return 0 si tout vas bien
+ */
 int main(int argc, char *argv[])
 {
     int sockfd;
