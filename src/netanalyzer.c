@@ -29,7 +29,8 @@ void end_analysis(void) {
 
     printf("Nombre de sondes envoyées: %d\n", stats.nb_probes);
     printf("Nombre de sondes sans réponse: %d\n", stats.nb_failed_probes);
-    printf("Taux d'erreur: %f\n", (float) stats.nb_failed_probes / (float) stats.nb_probes);
+    printf("Taux d'erreur: %f %\n",
+           ((float) stats.nb_failed_probes / (float) stats.nb_probes))*100;
     printf("La route vers l'hote a changé %d fois.\n", stats.nb_route_changes);
     exit(0);
 }
@@ -95,10 +96,11 @@ int main(int argc, char *argv[])
         else {
             fprintf(stderr, "Sonde %d reçue. RTT: %ld ms\n", num_probe,
                     probe_response.time);
+            stats.nb_probes++;
             if (ttl != 0 && probe_response.ttl != ttl) {
                 fprintf(stderr, "Le TTL a changé: %d->%d. Découverte des routes :\n",
                         ttl, probe_response.ttl);
-                stats.nb_route_changes;
+                stats.nb_route_changes++;
                 do_traceroute(sockfd, &destination, NB_PROBES, TTLMAX);
                 ttl = probe_response.ttl;
             }
