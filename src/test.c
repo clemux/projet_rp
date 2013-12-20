@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "icmp.h"
 #include "ip.h"
@@ -31,6 +33,7 @@ int main (int argc, char **argv)
     char *ip_retour;
     struct sockaddr_in destination;
     struct timeval timeInterval;
+    FILE* log = NULL;
 
     // check the number of args on command line
     if(argc != 2)
@@ -39,7 +42,19 @@ int main (int argc, char **argv)
         exit(-1);
     }
     
+    if((log = fopen("log.txt", "a+")) == NULL)
+    {
+		perror("fichier de log non crée");
+		exit(EXIT_FAILURE);
+	}
+	
+	if(fprintf(log, "test\n") <= 0)
+	{
+		perror("fprintf fail");
+		exit(EXIT_FAILURE);
+	}
     
+    fclose(log);
     if((sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1)
     {
         perror("impossible d'ouvrir la socket ");
@@ -88,6 +103,7 @@ int main (int argc, char **argv)
         else
             perror("erreur select");
     }
+    
 
     if(((pkt_r.icmp.type == 0) || (pkt_r.icmp.type == 8)) &&
        (pkt_r.icmp.code == 0) &&

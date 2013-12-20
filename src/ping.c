@@ -1,3 +1,10 @@
+/**
+* \file ping.c
+* \brief Contient la fonction de ping
+* \author Arnaud Petit
+* \author Clement Schreiner
+*/
+
 #include "packet.h"
 #include "utils.h"
 #include "dbg.h"
@@ -11,11 +18,27 @@
 #include <unistd.h>
 
 
-
+/**
+ * \def NB_PING Nombre de saut pour ping
+ */
 #define NB_PING 20
+/**
+ * \def TIMEOUT Secondes avant le timeout
+ */
 #define TIMEOUT 5
+/**
+ * \def DEFAULT_TTL Time to live par defaut
+ */
 #define DEFAULT_TTL 64
 
+
+/**
+ * \fn ping()
+ * \brief lance le ping
+ * \param 
+ * \param 
+ * \return
+ */
 
 int main(int argc, char *argv[]) {
     struct probe_response probe_response;

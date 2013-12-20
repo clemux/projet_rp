@@ -1,3 +1,10 @@
+/**
+* \file traceroute.c
+* \brief Contient la fonction de traceroute
+* \author Arnaud Petit
+* \author Clement Schreiner
+*/
+
 
 #include "icmp.h"
 #include "ip.h"
@@ -11,11 +18,26 @@
 #include <unistd.h> // close
 #include <arpa/inet.h> // inet_ntop
 
+/**
+ * \def TTLMAX Nombre de saut pour maximal
+ */
 #define TTLMAX 25
+/**
+ * \def TIMEOUT Secondes avant le timeout
+ */
 #define TIMEOUT 5
-
+/**
+ * \def NB_PROBES nombre de sondes envoyer par saut
+ */
 #define NB_PROBES 3
 
+/**
+ * \fn traceroute()
+ * \brief lance le traceroute
+ * \param 
+ * \param 
+ * \return
+ */
 int main(int argc, char *argv[]) {
     struct packet pkt_r;
     unsigned int ttl, i;

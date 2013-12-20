@@ -1,5 +1,19 @@
+/**
+* \file ip.c
+* \brief Contient la fonction permettant de calculer le checksum
+* \author Arnaud Petit
+* \author Clement Schreiner
+*/
+
 #include "ip.h"
 
+/**
+ * \fn uint16_t checksum(uint16_t *buffer, uint32_t size)
+ * \brief calcul le cheksum
+ * \param uint16_t *buffer, 
+ * \param uint32_t size, 
+ * \return le checksum
+ */
 uint16_t checksum(uint16_t *buffer, uint32_t size) {
     unsigned long sum = 0;
     

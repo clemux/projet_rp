@@ -1,7 +1,9 @@
-/*
-  Macros de debug, gentiment fournies par Zed. Shaw
-  Copyright (C) 2010 Zed. A. Shaw
-  http://c.learncodethehardway.org/book/ex20.html
+/**
+ *\file dbg.h
+ *\brief Macros de debug, gentiment fournies par Zed. Shaw
+ *\brief Copyright (C) 2010 Zed. A. Shaw
+ *\brief http://c.learncodethehardway.org/book/ex20.html
+ *\author Zed. A. Shaw
 */
 
 #ifndef __dbg_h__

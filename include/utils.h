@@ -1,3 +1,10 @@
+/**
+* \file utils.h
+* \brief Contient les definition des fonctions necessaire a utils.c
+* \author Arnaud Petit
+* \author Clement Schreiner
+*/
+
 #ifndef UTILS_H
 #define UTILS_H
 
