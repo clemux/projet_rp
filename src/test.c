@@ -15,7 +15,7 @@
 #include "dbg.h"
 
 #define TTLMAX 25
-#define PING 10
+#define PING 100
 #define TIMEOUT 5
 
 /*getnameinfo*/
@@ -52,7 +52,7 @@ int main (int argc, char **argv)
     server.sin_family = AF_INET;
 
     // conversion de l'adresse donnée en sockaddr_in
-    if(inet_pton(AF_INET, argv[1], &server.sin_addr) != 1)
+    if(inet_pton(AF_INET, argv[1], (struct sockaddr *) &server.sin_addr) != 1)
     {
         perror("inet_pton");
         close(sockfd);
@@ -60,11 +60,9 @@ int main (int argc, char **argv)
     }
     
     /* Preparation du paquet ICMP request */
-    pkt_s = prepare_icmp_header(0, 8);
-    
     for (try=0; try < 5; try++) {
-        if (sendto(sockfd, pkt_s, sizeof(struct icmp_header), 0, (struct sockaddr *)&server, addrlen ) == -1) {
-            perror("Envoi échoué ");
+        if ((pkt_s = send_echo_request(sockfd, &server)) == NULL) {
+            debug("Envoie echo request échoué: %d", try);
             close(sockfd);
             exit(1);
         }
@@ -93,8 +91,6 @@ int main (int argc, char **argv)
             perror("erreur select");
     }
 
-    printf("PROUTTT\n");
-    
     if(((pkt_r.icmp.type == 0) || (pkt_r.icmp.type == 8)) &&
        (pkt_r.icmp.code == 0) &&
        (pkt_r.icmp.id == pkt_s->id) &&
@@ -104,40 +100,46 @@ int main (int argc, char **argv)
     }
     else
         printf("Reponse mauvaise\n");
+
+    free(pkt_s);
     
 //TRACEROUTE
     pkt_r.icmp.type = 0x0B;
     ttl = 1;
     ip_retour = malloc(sizeof(uint32_t));
-    printf("Lancement de traceroute vers %s, nombre de saut : %d\n", argv[1], TTLMAX);
+    printf("Lancement de traceroute vers %s, nombre de saut : %d\n",
+           argv[1], TTLMAX);
     while (ttl < TTLMAX && strcmp(ip_retour, argv[1]) != 0)
     {
-        pkt_s->id = pkt_s->id + htons(0x0001);
-        pkt_s->seq_num = pkt_s->seq_num + htons(0x0001);
-        pkt_s->checksum = 0;
-        pkt_s->checksum = checksum((uint16_t*)&pkt_s, ICMP_HDR_LEN);
-        setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)); //Met a jour le ttl sur le socket
-        if (sendto(sockfd, &pkt_s, sizeof(pkt_s), 0, (struct sockaddr*)&server, addrlen ) == -1) //Envoi le paquet ICMP
-        {
+        //Met a jour le ttl sur le socket
+        setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)); 
+        
+        if ((send_echo_request(sockfd, &server) == NULL)) {
             perror("Envoi échoué ");
             close(sockfd);
             exit(-1);
         }
+
         //Réinitialisation des valeurs necessaire a select
         FD_ZERO (&rfd);
         FD_SET (sockfd, &rfd);
         timeInterval.tv_sec = TIMEOUT; //Timeout a 5 secondes
         timeInterval.tv_usec = 0;
-        if( select (sockfd+1, &rfd, NULL, NULL, &timeInterval) > 0 ) //Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
+        
+        //Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
+        if( select (sockfd+1, &rfd, NULL, NULL, &timeInterval) > 0 )
         {
-            if (recv (sockfd, &pkt_r, sizeof(pkt_r), 0) == -1) //Recuperation de l'information
+             //Recuperation de l'information
+            if (recv (sockfd, &pkt_r, sizeof(pkt_r), 0) == -1)
             {
                 perror("Rien recu ");
                 close(sockfd);
                 exit(-1);
             }
-            
-            if(inet_ntop(AF_INET, &(pkt_r.ip.ip_src), ip_retour, sizeof(argv[1])*2) == NULL) //Stock l'ip du routeur dans ip_retour en format texte
+
+            // Stock l'ip du routeur dans ip_retour en format texte
+            if(inet_ntop(AF_INET, &(pkt_r.ip.ip_src), ip_retour,
+                         sizeof(argv[1])*2) == NULL) 
             {
                 perror("inet_ntop merde ");
                 close(sockfd);
@@ -154,15 +156,13 @@ int main (int argc, char **argv)
     
 //PING
     ttl = 64;
-    setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)); //Met a jour le ttl sur le socket
+    //Met a jour le ttl sur le socket
+    setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
     printf("Lancement de Ping, envois de %d paquet(s)\n", PING);
     for (i = 0; i < PING; i++)
     {
-        pkt_s->id = pkt_s->id + htons(0x0001);
-        pkt_s->seq_num = pkt_s->seq_num + htons(0x0001);
-        pkt_s->checksum = 0;
-        pkt_s->checksum = checksum((uint16_t*)&pkt_s, ICMP_HDR_LEN);
-        if (sendto(sockfd, &pkt_s, sizeof(pkt_s), 0, (struct sockaddr*)&server, addrlen ) == -1) //Envoi le paquet ICMP
+        //Envoi le paquet ICMP
+        if ((pkt_s = send_echo_request(sockfd, &server)) == NULL)
         {
             perror("Envoi échoué ");
             close(sockfd);
@@ -173,17 +173,20 @@ int main (int argc, char **argv)
         FD_SET (sockfd, &rfd);
         timeInterval.tv_sec = TIMEOUT; //Timeout a 5 secondes
         timeInterval.tv_usec = 0;
-        if( select (sockfd+1, &rfd, NULL, NULL, &timeInterval) > 0 ) //Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
+        // Ecoute le socket jusqu au timeout, si > 0, il a recu quelque chose
+        if( select (sockfd+1, &rfd, NULL, NULL, &timeInterval) > 0 ) 
         {
-            if (recv (sockfd, &pkt_r, sizeof(pkt_r), 0) == -1) //Recuperation de l'information
+            // Recuperation de l'information
+            if (recv (sockfd, &pkt_r, sizeof(pkt_r), 0) == -1)
              {
                  perror("Rien recu ");
                  close(sockfd);
                  exit(-1);
              }
             
-            
-            if(inet_ntop(AF_INET, &(pkt_r.ip.ip_src), ip_retour, sizeof(argv[1])*2) == NULL) //Stock l'ip du routeur dans ip_retour en format texte
+            // Stock l'ip du routeur dans ip_retour en format texte
+            if(inet_ntop(AF_INET, &(pkt_r.ip.ip_src), ip_retour,
+                         sizeof(argv[1])*2) == NULL)
             {
                 perror("inet_ntop merde ");
                 close(sockfd);
@@ -197,7 +200,8 @@ int main (int argc, char **argv)
                 temps = (1000000 - (long int)timeInterval.tv_usec) / 1000;
                 if (TIMEOUT-1-timeInterval.tv_sec > 0)
                 {
-                    printf("%d time =  %ld sec et %ld ms\n", i+1, (long int)TIMEOUT-1-timeInterval.tv_sec, temps);
+                    printf("%d time =  %ld sec et %ld ms\n", i+1,
+                           (long int)TIMEOUT-1-timeInterval.tv_sec, temps);
                     moyenne += 1000 * (long int)TIMEOUT-1-timeInterval.tv_sec;
                     moyenne += temps;
                 }
@@ -214,7 +218,8 @@ int main (int argc, char **argv)
         }
     }
     
-    printf("Moyenne : %ld ms\nNombre de Paquet perdu : %d\n", moyenne/i, paquet_perdu);
+    printf("Moyenne : %ld ms\nNombre de Paquet perdu : %d\n", moyenne/i,
+           paquet_perdu);
     
     close(sockfd);
     return 0;

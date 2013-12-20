@@ -3,8 +3,12 @@
 
 #include <stdint.h>
 
-
 #define ICMP_HDR_LEN 8
+#define ECHO 0
+#define ECHO_REQUEST 8
+#define ECHO_REPLY 0
+
+#include <netinet/in.h>
 
 struct icmp_header {
     uint8_t type;
@@ -14,6 +18,8 @@ struct icmp_header {
     uint16_t seq_num;	
 };
 
-struct icmp_header* prepare_icmp_header(uint8_t code, uint8_t type);
+struct icmp_header* prepare_icmp_header(uint8_t code, uint8_t type,
+                                        unsigned int seq_num);
+struct icmp_header* send_echo_request(int sockfd, struct sockaddr_in *destination);
 
 #endif
