@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <signal.h>
+#include <stdarg.h>
 
 #define NB_PROBES 3 // pour traceroute
 #define TTLMAX 25
@@ -63,6 +64,10 @@ void handle_sigint(int sig) {
 }
 
 
+void do_log(FILE *fp, char *msg, ...) {
+    va_list argp;
+    vfprintf(fp, msg, argp);
+}
 
 
 int main(int argc, char *argv[])
@@ -71,7 +76,9 @@ int main(int argc, char *argv[])
     int res;
     struct sockaddr_in destination; // hote cible
     struct probe_response probe;
-    unsigned int i, ttl, num_probe;
+    unsigned int i, ttl;
+    unsigned int num_probe;
+    FILE *fp = fopen("net_analysis.log", "a+");
 
     action.sa_handler = handle_sigint;
     sigaction(SIGINT, &action, NULL);
@@ -104,6 +111,9 @@ int main(int argc, char *argv[])
 
     printf("Découverte des routes vers %s\n", argv[1]);
     do_traceroute(sockfd, &destination, NB_PROBES, TTLMAX);
+    printf("-------------------------------------------------\n");
+    printf("Envoi d'une sonde ICMP toutes les %d secondes.\n", INTERVAL);
+    printf("Écriture dans net_analysis.log\n");
 
     ttl = 0;
     stats.nb_probes = 0;
@@ -111,24 +121,28 @@ int main(int argc, char *argv[])
     for(num_probe=0; ; num_probe++) {
         struct probe_response probe_response = probe_icmp(sockfd, &destination);
         if (probe_response.status != PROBE_OK) {
-            fprintf(stderr, "Sonde %d non reçue.\n", num_probe);
+            //do_log(fp, "Sonde %d non reçue.\n", num_probe);
+            fprintf(fp, "Sonde %d non reçue.\n", num_probe);
             stats.nb_failed_probes++;
         }
         
         else {
-            fprintf(stderr, "Sonde %d reçue. RTT: %ld ms\n", num_probe,
-                    probe_response.time);
+            fprintf(fp, "Sonde %u reçue. RTT: %ld ms\n", num_probe, probe_response.time);
+
             stats.nb_probes++;
             if (ttl != 0 && probe_response.ttl != ttl) {
-                fprintf(stderr, "Le TTL a changé: %d->%d. Découverte des routes :\n",
+                printf("Le TTL a changé: %u->%u. Découverte des routes :\n",
                         ttl, probe_response.ttl);
                 stats.nb_route_changes++;
                 do_traceroute(sockfd, &destination, NB_PROBES, TTLMAX);
                 ttl = probe_response.ttl;
             }
         }
+        // apparemment le buffer n'est pas vidé à chaque \n, pas le temps de
+        //chercher pourquoi... sera corrigé dans la version de janvier
+        fflush(fp); 
         sleep(INTERVAL);
     }
-
+    fclose(fp);
     return 0;
 }
